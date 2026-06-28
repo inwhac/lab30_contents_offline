@@ -194,7 +194,7 @@
       <div class="round-pick">
         <div class="rp-label">수강할 회차를 선택하세요 <span class="lvl round">회차 단위 = 신청 단위</span></div>
         <select class="round-select" id="roundSelect"></select>
-        <div class="rp-hint">학습자는 <b>회차</b>를 선택해 신청하며, 신청기간·학습기간·정원·오프라인 일정은 선택한 회차 기준으로 표시됩니다.</div>
+        <div class="rp-hint">학습자는 <b>회차</b>를 선택해 신청하며, 정원·오프라인 일정은 선택한 회차 기준으로 표시됩니다. (신청기간·학습기간은 과정 공통)</div>
       </div>
 
       <!-- 회차 메타 : 신청기간 / 학습기간 / 정원 -->
@@ -243,8 +243,8 @@
 
       <!-- 강사 정보 -->
       <div class="tabpane" id="pane-teacher">
-        <div class="sec-head"><h2>강사 정보</h2><span class="lvl sched">교육일정 단위</span></div>
-        <div class="note-strip">ⓘ 강사는 <b style="color:var(--amber-ink)">교육일정(세션)별</b>로 등록됩니다. 선택한 회차에 배정된 강사들을 보여줍니다.</div>
+        <div class="sec-head"><h2>강사 정보</h2><span class="lvl course">과정 단위</span></div>
+        <div class="note-strip">ⓘ 강사는 <b style="color:#42506c">과정 단위</b>로 등록됩니다. 회차·교육일정과 무관하게 동일하게 노출됩니다.</div>
         <div class="t-tabs" id="teacherTabs"></div>
         <div id="teacherCard"></div>
       </div>
@@ -274,6 +274,9 @@
 
 <script>
 const COURSE = {
+  // 신청기간·학습기간 = 과정 단위 (모든 회차 공통)
+  apply:'2025.06.01 ~ 2025.06.30',
+  study:'2025.07.01 ~ 2025.09.30',
   // 사전/사후 학습 = 과정 단위 (모든 회차 공통)
   preLearning: [
     {type:'동영상', name:'리더십이란 무엇인가 (사전 강의)', meta:'동영상 12분 30초'},
@@ -291,10 +294,11 @@ const COURSE = {
     '심재훈':['고려대학교 교육학 석사','현) HRD 컨설턴트','리더십 진단·코칭 전문'],
     '권순민':['현) 리더십 전문 강사','기업 야간 교육과정 다수 진행'],
   },
+  // 강사 정보 탭에 노출할 강사 = 과정 단위로 등록 (회차/교육일정과 무관)
+  courseTeachers: ['김병윤','박영상','심재훈'],
   // 회차 = 신청 단위. 교육일정 = 회차 하위
   rounds: [
     { id:1, name:'1회차 - 백탁: 리더십은 힘이다', capacity:20,
-      apply:'2025.06.01 ~ 2025.06.30', study:'2025.07.01 ~ 2025.09.30',
       schedules:[
         {date:'2025-07-10', dow:'목', name:'1일차 · 리더십 개론', start:'09:00', end:'18:00',
          teacher:'김병윤', place:'휴넷 캠퍼스 혁신룸', info:'노트북 지참, 사전 진단지 제출 필수'},
@@ -304,7 +308,6 @@ const COURSE = {
          teacher:'김병윤', place:'코엑스 컨퍼런스룸 308', info:'팀별 발표 자료 준비'},
       ]},
     { id:2, name:'2회차 - 백탁: 리더십은 힘이다', capacity:20,
-      apply:'2025.06.01 ~ 2025.06.30', study:'2025.07.01 ~ 2025.09.30',
       schedules:[
         {date:'2025-07-15', dow:'화', name:'1일차 · 리더십 개론', start:'09:00', end:'18:00',
          teacher:'심재훈', place:'부산 교육센터 201호', info:''},
@@ -312,7 +315,6 @@ const COURSE = {
          teacher:'심재훈', place:'부산 교육센터 201호', info:''},
       ]},
     { id:3, name:'3회차 - 백탁: 리더십은 힘이다 (야간반)', capacity:15,
-      apply:'2025.09.01 ~ 2025.09.25', study:'2025.10.01 ~ 2025.11.30',
       schedules:[
         {date:'2025-10-06', dow:'월', name:'1일차 · 리더십 개론', start:'19:00', end:'22:00',
          teacher:'권순민', place:'휴넷 캠퍼스 혁신룸', info:'야간 진행, 식사 미제공'},
@@ -331,6 +333,22 @@ const TYPE_META = {
 };
 
 const fmtDate = iso => { const [y,m,d]=iso.split('-'); return `${y}.${m}.${d}`; };
+
+// 회차의 교육일정 범위 (시작 ~ 종료)
+function roundDateRange(r){
+  if(!r.schedules.length) return '일정 미등록';
+  const dates = r.schedules.map(s=>s.date).sort();
+  const a=fmtDate(dates[0]), b=fmtDate(dates[dates.length-1]);
+  return a===b ? a : `${a} ~ ${b}`;
+}
+
+// 회차의 교육일정 기간(처음~마지막 교육일)
+const schedRange = r => {
+  if(!r.schedules.length) return '교육일정 미등록';
+  const dates = r.schedules.map(s=>s.date).sort();
+  const a=fmtDate(dates[0]), b=fmtDate(dates[dates.length-1]);
+  return a===b ? a : `${a} ~ ${b}`;
+};
 
 function contentRow(item){
   const t = TYPE_META[item.type] || {g:'·', c:'#7b8499'};
@@ -375,15 +393,15 @@ function renderTeacherCard(name){
 function renderRound(r){
   currentRound = r;
 
-  // 메타 : 신청기간 / 학습기간 / 정원
+  // 메타 : 신청기간(과정) / 학습기간(과정) / 정원(회차)
   document.getElementById('metaStrip').innerHTML = `
     <div class="cell">
-      <div class="k"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg> 신청기간 <span class="lvl round">회차</span></div>
-      <div class="v">${r.apply}</div>
+      <div class="k"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg> 신청기간 <span class="lvl course">과정</span></div>
+      <div class="v">${COURSE.apply}</div>
     </div>
     <div class="cell">
-      <div class="k"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M9 21h6"/></svg> 학습기간 <span class="lvl round">회차</span></div>
-      <div class="v">${r.study}</div>
+      <div class="k"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M9 21h6"/></svg> 학습기간 <span class="lvl course">과정</span></div>
+      <div class="v">${COURSE.study}</div>
     </div>
     <div class="cell">
       <div class="k"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg> 정원 <span class="lvl round">회차</span></div>
@@ -417,21 +435,22 @@ function renderRound(r){
       </div>`;
     }).join('');
   }
+}
 
-  // 강사 정보 (선택 회차의 세션별 강사 — 중복 제거, 등장 순)
-  const names = [];
-  r.schedules.forEach(s=>{ if(s.teacher && !names.includes(s.teacher)) names.push(s.teacher); });
+// 강사 정보 (과정 단위 — 회차와 무관, 1회만 렌더)
+function renderCourseTeachers(){
+  const names = COURSE.courseTeachers || [];
   const tabsEl = document.getElementById('teacherTabs');
   if(!names.length){
     tabsEl.innerHTML = '';
     document.getElementById('teacherCard').innerHTML = '<div class="empty">등록된 강사 정보가 없습니다.</div>';
-  } else {
-    tabsEl.innerHTML = names.map(n=>`<div class="t-tab" data-name="${n}">${n}</div>`).join('');
-    tabsEl.querySelectorAll('.t-tab').forEach(el=>{
-      el.addEventListener('click', ()=> renderTeacherCard(el.dataset.name));
-    });
-    renderTeacherCard(names[0]);
+    return;
   }
+  tabsEl.innerHTML = names.map(n=>`<div class="t-tab" data-name="${n}">${n}</div>`).join('');
+  tabsEl.querySelectorAll('.t-tab').forEach(el=>{
+    el.addEventListener('click', ()=> renderTeacherCard(el.dataset.name));
+  });
+  renderTeacherCard(names[0]);
 }
 
 // 회차 셀렉트 채우기 (잔여 표기 없음)
@@ -439,12 +458,13 @@ const sel = document.getElementById('roundSelect');
 COURSE.rounds.forEach((r,i)=>{
   const opt = document.createElement('option');
   opt.value = i;
-  opt.textContent = `${r.name}  ·  일정 ${r.study}`;
+  opt.textContent = `${r.name}  ·  일정 ${roundDateRange(r)}`;
   sel.appendChild(opt);
 });
 sel.addEventListener('change', e=> renderRound(COURSE.rounds[+e.target.value]));
 
 renderCourseLearning();
+renderCourseTeachers();
 renderRound(COURSE.rounds[0]);
 
 // 탭 전환
