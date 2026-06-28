@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>연수원 3.0 · Contents 상세 정보 — 오프라인 구성안</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+  :root{
+    --bg:#eef1f5;
+    --surface:#ffffff;
+    --ink:#171719;
+    --ink-2:rgba(23,23,25,.8);
+    --ink-3:rgba(23,23,25,.6);
+    --ink-4:rgba(23,23,25,.45);
+    --line:#e1e2e4;
+    --line-2:#eaebec;
+    --alt:#f7f7f8;
+    --navy:#171719;
+    --blue:#06f;
+    --blue-soft:rgba(0,102,255,.06);
+    --amber:#f5a200;
+    --amber-soft:#fff4dd;
+    --amber-ink:#9a6500;
+    --violet:#6541f2;
+    --violet-soft:rgba(101,65,242,.06);
+    --radius:16px;
+    --radius-md:12px;
+    --radius-sm:8px;
+    --shadow:0 1px 4px rgba(0,0,0,.05),0 8px 28px rgba(20,38,75,.06);
+    font-family:'Pretendard','Pretendard Variable',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.6;letter-spacing:-.4px;}
+
+  /* 상단 작업 바 (프로토타입 전용) */
+  .toolbar{position:sticky;top:0;z-index:50;background:#14264b;color:#fff;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:11px 20px;font-size:13px;letter-spacing:-.2px;}
+  .toolbar .tag{background:rgba(255,255,255,.14);border-radius:6px;padding:3px 9px;font-weight:600;}
+  .toolbar .desc{color:#c4cde0;}
+  .toolbar .spacer{flex:1;}
+  .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;color:#dfe6f3;}
+  .switch input{display:none;}
+  .switch .track{width:36px;height:20px;border-radius:20px;background:rgba(255,255,255,.25);position:relative;transition:.18s;}
+  .switch .track::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.18s;}
+  .switch input:checked + .track{background:var(--amber);}
+  .switch input:checked + .track::after{transform:translateX(16px);}
+
+  .wrap{max-width:780px;margin:26px auto 80px;padding:0 16px;}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+
+  /* 데이터 레벨 배지 */
+  .lvl{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;letter-spacing:.2px;white-space:nowrap;line-height:1;}
+  .lvl::before{content:"";width:6px;height:6px;border-radius:50%;}
+  .lvl.course{background:#eef1f6;color:#42506c;}
+  .lvl.course::before{background:#6b7896;}
+  .lvl.round{background:var(--blue-soft);color:#0052cc;}
+  .lvl.round::before{background:var(--blue);}
+  .lvl.sched{background:var(--amber-soft);color:var(--amber-ink);}
+  .lvl.sched::before{background:var(--amber);}
+  body:not(.show-levels) .lvl{display:none;}
+
+  /* 과정 헤더 */
+  .head{padding:24px 24px 4px;}
+  h1.title{font-size:24px;font-weight:800;margin:0;letter-spacing:-.7px;color:var(--ink);line-height:1.4;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  /* 회차 선택 = 신청 단위 */
+  .round-pick{margin:16px 24px 0;border:1.5px solid var(--blue);border-radius:var(--radius-md);background:#fbfcff;padding:14px 15px;}
+  .round-pick .rp-label{font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  select.round-select{width:100%;font-size:15px;font-weight:600;color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2346506b' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;}
+  .rp-hint{font-size:12px;color:var(--ink-3);margin-top:7px;}
+  .rp-hint b{color:var(--blue);font-weight:700;}
+
+  /* 회차 메타 */
+  .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 24px 0;}
+  .meta .cell{border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .meta .k{font-size:13px;color:var(--ink-3);font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .meta .k svg{width:15px;height:15px;stroke:var(--ink-3);fill:none;stroke-width:1.7;}
+  .meta .v{font-size:16px;font-weight:500;color:var(--ink);}
+
+  /* 탭 */
+  .tabs{display:flex;gap:32px;margin:28px 24px 0;border-bottom:1px solid var(--line-2);}
+  .tab{font-size:16px;font-weight:500;color:var(--ink-3);padding:14px 0;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--ink);font-weight:800;}
+  .tabpane{display:none;padding:28px 24px 30px;}
+  .tabpane.active{display:block;}
+
+  .sec-head{display:flex;align-items:center;gap:9px;margin:0 0 14px;}
+  .sec-head h2{font-size:16px;font-weight:700;color:var(--ink);margin:0;}
+  p.body{font-size:16px;color:var(--ink-2);margin:0 0 14px;font-weight:400;}
+  .field-card{border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;}
+  .field-card .fc-title{font-size:16px;font-weight:600;margin:0 0 8px;}
+  .bullet{display:flex;gap:8px;align-items:flex-start;font-size:16px;color:var(--ink-2);padding:3px 0;}
+  .bullet::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--ink);margin-top:11px;flex:none;}
+
+  .note-strip{font-size:12px;color:var(--ink-3);background:#f8f9fc;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;margin:0 0 14px;display:flex;gap:7px;align-items:flex-start;}
+  body:not(.show-levels) .note-strip{display:none;}
+
+  /* 학습 목록 — 서브 블록 */
+  .sub-block{margin-bottom:26px;}
+  .sub-block:last-child{margin-bottom:0;}
+  .sub-title{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;color:var(--ink);margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line-2);}
+  .sub-title .step{width:22px;height:22px;border-radius:6px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none;}
+  .sub-title .count{margin-left:auto;font-size:13px;font-weight:500;color:var(--ink-3);}
+
+  /* 사전/사후 콘텐츠 행 */
+  .c-row{display:flex;align-items:center;gap:12px;padding:10px 8px;}
+  .c-row + .c-row{border-top:1px solid var(--line-2);}
+  .c-ico{width:48px;height:48px;border-radius:var(--radius-sm);display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;color:#fff;flex:none;}
+  .c-ico .g{font-size:15px;font-weight:800;line-height:1;letter-spacing:-.3px;}
+  .c-main{flex:1;min-width:0;}
+  .c-name{font-size:16px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .c-meta{font-size:12px;color:var(--ink-4);margin-top:2px;}
+  .empty{font-size:14px;color:var(--ink-3);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius-sm);background:var(--alt);}
+
+  /* 오프라인 일정 */
+  .day-group{margin-bottom:16px;}
+  .day-head{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--ink);margin:0 0 10px;}
+  .day-head .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);}
+  .sched-card{border:1px solid var(--line);border-radius:var(--radius-md);padding:15px 16px;margin-bottom:10px;background:#fff;}
+  .sched-card .sc-name{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:11px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .sc-rows{display:grid;grid-template-columns:64px 1fr;gap:8px 12px;font-size:15px;}
+  .sc-rows .rk{color:var(--ink-3);font-weight:500;}
+  .sc-rows .rv{color:var(--ink);font-weight:400;}
+  .sc-rows .rv.muted{color:var(--ink-4);}
+
+  /* 강사 정보 */
+  .t-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+  .t-tab{font-size:14px;font-weight:500;color:var(--ink-3);padding:7px 12px;border-radius:var(--radius-sm);cursor:pointer;}
+  .t-tab.active{background:rgba(0,0,0,.05);color:var(--ink);font-weight:800;}
+  .t-card{background:var(--alt);border-radius:var(--radius-md);padding:20px 24px;display:flex;gap:24px;align-items:flex-start;}
+  .t-photo{width:100px;height:133px;border-radius:var(--radius-sm);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:800;background:linear-gradient(160deg,#3a4a6b,#1f2c47);}
+  .t-info{flex:1;min-width:0;}
+  .t-name{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:12px;}
+  .t-cred{font-size:14px;color:var(--ink-2);line-height:1.6;}
+  .t-cred div{margin-bottom:1px;}
+
+  /* 수료 기준 */
+  table.crit{width:100%;border-collapse:collapse;font-size:16px;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;}
+  table.crit th,table.crit td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line-2);font-weight:400;}
+  table.crit thead th{background:var(--alt);font-size:14px;color:var(--ink-3);font-weight:500;}
+  table.crit td.num,table.crit th.num{width:100px;}
+  table.crit tr.total td{background:var(--alt);font-weight:700;border-bottom:none;}
+
+  /* 하단 신청 바 */
+  .applybar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;justify-content:flex-end;gap:10px;}
+  .btn-like{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:15px;font-weight:600;color:var(--ink);padding:12px 18px;cursor:pointer;}
+  .btn-like .heart{font-size:16px;color:var(--ink-3);line-height:1;}
+  .btn-like.on{border-color:#ff5a7a;color:#ff3b5c;}
+  .btn-like.on .heart{color:#ff3b5c;}
+  .btn-apply{background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:800;padding:13px 40px;cursor:pointer;}
+
+  .legend{max-width:780px;margin:16px auto 0;padding:0 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink-3);}
+  body:not(.show-levels) .legend{display:none;}
+
+  @media (max-width:560px){
+    h1.title{font-size:21px;}
+    .meta{grid-template-columns:1fr;}
+    .tabs{gap:20px;overflow-x:auto;}
+    .t-card{gap:16px;}
+    .t-photo{width:80px;height:106px;font-size:24px;}
+  }
+</style>
+</head>
+<body class="show-levels">
+
+  <div class="toolbar">
+    <span class="tag">연수원 3.0</span>
+    <span class="desc">Contents › 상세 정보 구성안 · <b>오프라인</b> (러닝메이커 위계 반영)</span>
+    <span class="spacer"></span>
+    <label class="switch">
+      <input type="checkbox" id="lvlToggle" checked />
+      <span class="track"></span>
+      데이터 레벨 표시
+    </label>
+  </div>
+
+  <div class="legend">
+    구성 위계:
+    <span class="lvl course">과정 단위</span>
+    <span class="lvl round">회차 단위 = 수강신청 단위</span>
+    <span class="lvl sched">교육일정 단위</span>
+  </div>
+
+  <div class="wrap">
+    <div class="panel">
+
+      <!-- 과정 헤더 (제목만) -->
+      <div class="head">
+        <h1 class="title">백탁: 리더십은 힘이다 <span class="lvl course">과정 단위</span></h1>
+      </div>
+
+      <!-- 회차 선택 = 수강신청 단위 -->
+      <div class="round-pick">
+        <div class="rp-label">수강할 회차를 선택하세요 <span class="lvl round">회차 단위 = 신청 단위</span></div>
+        <select class="round-select" id="roundSelect"></select>
+        <div class="rp-hint">학습자는 <b>회차</b>를 선택해 신청하며, 신청기간·학습기간·정원·오프라인 일정은 선택한 회차 기준으로 표시됩니다.</div>
+      </div>
+
+      <!-- 회차 메타 : 신청기간 / 학습기간 / 정원 -->
+      <div class="meta" id="metaStrip"></div>
+
+      <!-- 탭 -->
+      <div class="tabs">
+        <div class="tab" data-tab="intro">소개</div>
+        <div class="tab active" data-tab="list">학습 목록</div>
+        <div class="tab" data-tab="teacher">강사 정보</div>
+        <div class="tab" data-tab="criteria">수료 기준</div>
+      </div>
+
+      <!-- 소개 -->
+      <div class="tabpane" id="pane-intro">
+        <div class="sec-head"><h2>과정 소개</h2><span class="lvl course">과정 단위</span></div>
+        <p class="body">조직의 성과는 리더 한 사람의 영향력에서 출발합니다. 본 과정은 현업 리더가 팀을 이끄는 데 필요한 의사결정·커뮤니케이션·동기부여 역량을 사전학습과 집합 교육, 사후 과제를 통해 체득하도록 설계되었습니다.</p>
+        <div class="field-card">
+          <div class="fc-title">학습 목표</div>
+          <div class="bullet">이론이 아닌 실무에 적용 가능한 조직관리를 학습하고 성과를 창출하는 조직으로 이끌 수 있다.</div>
+          <div class="bullet">성과를 내는 조직의 차별점을 이해하고 우리 조직에 맞는 리더십을 발휘할 수 있다.</div>
+        </div>
+      </div>
+
+      <!-- 학습 목록 -->
+      <div class="tabpane active" id="pane-list">
+        <!-- 1. 사전 학습 (과정 단위) -->
+        <div class="sub-block">
+          <div class="sub-title"><span class="step">1</span> 사전 학습 <span class="lvl course">과정 단위</span><span class="count" id="preCount"></span></div>
+          <div id="preList"></div>
+        </div>
+
+        <!-- 2. 오프라인 일정 (회차 하위) -->
+        <div class="sub-block">
+          <div class="sub-title"><span class="step">2</span> 오프라인 일정 <span class="lvl round">선택 회차 하위</span><span class="count" id="schedCount"></span></div>
+          <div class="note-strip">ⓘ 시간 · 강사 · 장소 · 교육정보는 모두 <b style="color:var(--amber-ink)">교육일정 단위</b>로 등록됩니다. 같은 회차라도 일자(세션)마다 값이 다를 수 있습니다.</div>
+          <div id="schedList"></div>
+        </div>
+
+        <!-- 3. 사후 학습 (과정 단위) -->
+        <div class="sub-block">
+          <div class="sub-title"><span class="step">3</span> 사후 학습 <span class="lvl course">과정 단위</span><span class="count" id="postCount"></span></div>
+          <div id="postList"></div>
+        </div>
+      </div>
+
+      <!-- 강사 정보 -->
+      <div class="tabpane" id="pane-teacher">
+        <div class="sec-head"><h2>강사 정보</h2><span class="lvl sched">교육일정 단위</span></div>
+        <div class="note-strip">ⓘ 강사는 <b style="color:var(--amber-ink)">교육일정(세션)별</b>로 등록됩니다. 선택한 회차에 배정된 강사들을 보여줍니다.</div>
+        <div class="t-tabs" id="teacherTabs"></div>
+        <div id="teacherCard"></div>
+      </div>
+
+      <!-- 수료 기준 -->
+      <div class="tabpane" id="pane-criteria">
+        <div class="sec-head"><h2>수료 기준</h2></div>
+        <table class="crit">
+          <thead><tr><th>평가항목</th><th class="num">필수</th><th class="num">평가비중</th><th>수료기준</th></tr></thead>
+          <tbody>
+            <tr><td>진도(출석)</td><td class="num">필수</td><td class="num">50%</td><td>필수 출석 충족</td></tr>
+            <tr><td>과제</td><td class="num">필수</td><td class="num">30%</td><td>60점 이상</td></tr>
+            <tr><td>설문</td><td class="num">선택</td><td class="num">20%</td><td>제출</td></tr>
+            <tr class="total"><td>총점</td><td class="num"></td><td class="num"></td><td>80점 이상</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 하단 신청 -->
+      <div class="applybar">
+        <button class="btn-like" id="likeBtn"><span class="heart">♡</span> 관심과정</button>
+        <button class="btn-apply">수강신청</button>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+const COURSE = {
+  // 사전/사후 학습 = 과정 단위 (모든 회차 공통)
+  preLearning: [
+    {type:'동영상', name:'리더십이란 무엇인가 (사전 강의)', meta:'동영상 12분 30초'},
+    {type:'아티클', name:'사전 진단: 나의 리더십 유형', meta:'아티클 1개'},
+  ],
+  postLearning: [
+    {type:'과제', name:'우리 팀 리더십 실행계획서', meta:'과제 1개'},
+    {type:'시험', name:'리더십 이해도 평가', meta:'시험 20문항'},
+    {type:'설문', name:'교육 만족도 설문', meta:'설문 10문항'},
+  ],
+  // 강사 마스터 (이력)
+  teachers: {
+    '김병윤':['연세대학교 경영학 박사','현) 휴넷 리더십센터 수석연구위원','전) 대기업 HRD 팀장','저서 〈리더의 언어〉 외 다수'],
+    '박영상':['한국조직개발협회 인증 퍼실리테이터','현) 조직문화 컨설팅 그룹 대표','팀빌딩·워크숍 1,000회 이상 진행'],
+    '심재훈':['고려대학교 교육학 석사','현) HRD 컨설턴트','리더십 진단·코칭 전문'],
+    '권순민':['현) 리더십 전문 강사','기업 야간 교육과정 다수 진행'],
+  },
+  // 회차 = 신청 단위. 교육일정 = 회차 하위
+  rounds: [
+    { id:1, name:'1회차 - 백탁: 리더십은 힘이다', capacity:20,
+      apply:'2025.06.01 ~ 2025.06.30', study:'2025.07.01 ~ 2025.09.30',
+      schedules:[
+        {date:'2025-07-10', dow:'목', name:'1일차 · 리더십 개론', start:'09:00', end:'18:00',
+         teacher:'김병윤', place:'휴넷 캠퍼스 혁신룸', info:'노트북 지참, 사전 진단지 제출 필수'},
+        {date:'2025-08-20', dow:'수', name:'2일차 · 팀 빌딩 워크숍', start:'09:00', end:'17:00',
+         teacher:'박영상', place:'휴넷 캠퍼스 협업룸 B', info:''},
+        {date:'2025-09-10', dow:'수', name:'3일차 · 리더십 실전 케이스', start:'13:00', end:'18:00',
+         teacher:'김병윤', place:'코엑스 컨퍼런스룸 308', info:'팀별 발표 자료 준비'},
+      ]},
+    { id:2, name:'2회차 - 백탁: 리더십은 힘이다', capacity:20,
+      apply:'2025.06.01 ~ 2025.06.30', study:'2025.07.01 ~ 2025.09.30',
+      schedules:[
+        {date:'2025-07-15', dow:'화', name:'1일차 · 리더십 개론', start:'09:00', end:'18:00',
+         teacher:'심재훈', place:'부산 교육센터 201호', info:''},
+        {date:'2025-08-26', dow:'화', name:'2일차 · 팀 빌딩 워크숍', start:'09:00', end:'17:00',
+         teacher:'심재훈', place:'부산 교육센터 201호', info:''},
+      ]},
+    { id:3, name:'3회차 - 백탁: 리더십은 힘이다 (야간반)', capacity:15,
+      apply:'2025.09.01 ~ 2025.09.25', study:'2025.10.01 ~ 2025.11.30',
+      schedules:[
+        {date:'2025-10-06', dow:'월', name:'1일차 · 리더십 개론', start:'19:00', end:'22:00',
+         teacher:'권순민', place:'휴넷 캠퍼스 혁신룸', info:'야간 진행, 식사 미제공'},
+      ]},
+  ]
+};
+
+// 콘텐츠 유형별 아이콘(글자) + 색
+const TYPE_META = {
+  '동영상':{g:'▶', c:'#2f6bff'}, '유튜브':{g:'▶', c:'#e8533a'},
+  '아티클':{g:'A', c:'#13b58a'}, '이미지':{g:'▣', c:'#9b59b6'},
+  '첨부파일':{g:'⎙', c:'#7b8499'}, 'PDF':{g:'PDF', c:'#d64550'},
+  '외부링크':{g:'↗', c:'#0d9488'}, '오프라인':{g:'◉', c:'#6541f2'},
+  '시험':{g:'T', c:'#e8533a'}, '퀴즈':{g:'Q', c:'#10b981'},
+  '과제':{g:'✎', c:'#f5a200'}, '설문':{g:'≣', c:'#3b82f6'}, '토론':{g:'❝', c:'#8b5cf6'},
+};
+
+const fmtDate = iso => { const [y,m,d]=iso.split('-'); return `${y}.${m}.${d}`; };
+
+function contentRow(item){
+  const t = TYPE_META[item.type] || {g:'·', c:'#7b8499'};
+  const gSize = t.g.length>1 ? 'font-size:11px' : '';
+  return `<div class="c-row">
+    <div class="c-ico" style="background:${t.c}"><span class="g" style="${gSize}">${t.g}</span></div>
+    <div class="c-main">
+      <div class="c-name">${item.name}</div>
+      <div class="c-meta">${item.meta}</div>
+    </div>
+  </div>`;
+}
+
+// 사전/사후 학습 (과정 단위 — 1회만 렌더)
+function renderCourseLearning(){
+  const pre = COURSE.preLearning, post = COURSE.postLearning;
+  document.getElementById('preList').innerHTML =
+    pre.length ? pre.map(contentRow).join('') : '<div class="empty">등록된 사전 학습 콘텐츠가 없습니다.</div>';
+  document.getElementById('postList').innerHTML =
+    post.length ? post.map(contentRow).join('') : '<div class="empty">등록된 사후 학습 콘텐츠가 없습니다.</div>';
+  document.getElementById('preCount').textContent = pre.length ? `${pre.length}개` : '';
+  document.getElementById('postCount').textContent = post.length ? `${post.length}개` : '';
+}
+
+let currentRound = null;
+
+function renderTeacherCard(name){
+  const cred = COURSE.teachers[name] || [];
+  document.getElementById('teacherCard').innerHTML = `
+    <div class="t-card">
+      <div class="t-photo">${name.charAt(0)}</div>
+      <div class="t-info">
+        <div class="t-name">${name}</div>
+        <div class="t-cred">${cred.map(c=>`<div>${c}</div>`).join('')}</div>
+      </div>
+    </div>`;
+  document.querySelectorAll('#teacherTabs .t-tab').forEach(el=>{
+    el.classList.toggle('active', el.dataset.name===name);
+  });
+}
+
+function renderRound(r){
+  currentRound = r;
+
+  // 메타 : 신청기간 / 학습기간 / 정원
+  document.getElementById('metaStrip').innerHTML = `
+    <div class="cell">
+      <div class="k"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg> 신청기간 <span class="lvl round">회차</span></div>
+      <div class="v">${r.apply}</div>
+    </div>
+    <div class="cell">
+      <div class="k"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M9 21h6"/></svg> 학습기간 <span class="lvl round">회차</span></div>
+      <div class="v">${r.study}</div>
+    </div>
+    <div class="cell">
+      <div class="k"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg> 정원 <span class="lvl round">회차</span></div>
+      <div class="v">${r.capacity===0?'제한없음':r.capacity+'명'}</div>
+    </div>`;
+
+  document.getElementById('schedCount').textContent = `${r.schedules.length}개 세션`;
+
+  // 오프라인 일정 (일자별 그룹) — 시간/강사/장소/교육정보
+  const list = document.getElementById('schedList');
+  if(!r.schedules.length){
+    list.innerHTML = `<div class="empty">이 회차에 등록된 교육일정이 없습니다.</div>`;
+  } else {
+    const byDate = {};
+    r.schedules.forEach(s=>{ (byDate[s.date]=byDate[s.date]||[]).push(s); });
+    list.innerHTML = Object.keys(byDate).sort().map(date=>{
+      const dow = byDate[date][0].dow;
+      const cards = byDate[date].map(s=>`
+        <div class="sched-card">
+          <div class="sc-name">${s.name} <span class="lvl sched">교육일정</span></div>
+          <div class="sc-rows">
+            <div class="rk">시간</div><div class="rv">${s.start} ~ ${s.end}</div>
+            <div class="rk">강사</div><div class="rv ${s.teacher?'':'muted'}">${s.teacher||'미배정'}</div>
+            <div class="rk">장소</div><div class="rv ${s.place?'':'muted'}">${s.place||'미정'}</div>
+            <div class="rk">교육정보</div><div class="rv ${s.info?'':'muted'}">${s.info||'—'}</div>
+          </div>
+        </div>`).join('');
+      return `<div class="day-group">
+        <div class="day-head"><span class="dot"></span>${fmtDate(date)} (${dow}) 교육</div>
+        ${cards}
+      </div>`;
+    }).join('');
+  }
+
+  // 강사 정보 (선택 회차의 세션별 강사 — 중복 제거, 등장 순)
+  const names = [];
+  r.schedules.forEach(s=>{ if(s.teacher && !names.includes(s.teacher)) names.push(s.teacher); });
+  const tabsEl = document.getElementById('teacherTabs');
+  if(!names.length){
+    tabsEl.innerHTML = '';
+    document.getElementById('teacherCard').innerHTML = '<div class="empty">등록된 강사 정보가 없습니다.</div>';
+  } else {
+    tabsEl.innerHTML = names.map(n=>`<div class="t-tab" data-name="${n}">${n}</div>`).join('');
+    tabsEl.querySelectorAll('.t-tab').forEach(el=>{
+      el.addEventListener('click', ()=> renderTeacherCard(el.dataset.name));
+    });
+    renderTeacherCard(names[0]);
+  }
+}
+
+// 회차 셀렉트 채우기 (잔여 표기 없음)
+const sel = document.getElementById('roundSelect');
+COURSE.rounds.forEach((r,i)=>{
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = `${r.name}  ·  일정 ${r.study}`;
+  sel.appendChild(opt);
+});
+sel.addEventListener('change', e=> renderRound(COURSE.rounds[+e.target.value]));
+
+renderCourseLearning();
+renderRound(COURSE.rounds[0]);
+
+// 탭 전환
+document.querySelectorAll('.tabs > .tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabs > .tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('pane-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+// 관심과정 토글
+document.getElementById('likeBtn').addEventListener('click', function(){
+  const on = this.classList.toggle('on');
+  this.querySelector('.heart').textContent = on ? '♥' : '♡';
+});
+
+// 데이터 레벨 토글
+document.getElementById('lvlToggle').addEventListener('change', e=>{
+  document.body.classList.toggle('show-levels', e.target.checked);
+});
+</script>
+</body>
+</html>
